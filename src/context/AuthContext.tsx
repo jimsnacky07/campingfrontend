@@ -18,6 +18,7 @@ interface AuthContextValue {
   login: (payload: { email: string; password: string }) => Promise<void>;
   register: (payload: Record<string, string>) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -94,6 +95,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       login,
       register,
       logout,
+      setUser,
     }),
     [loading, login, logout, register, token, user],
   );

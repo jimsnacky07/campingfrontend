@@ -13,6 +13,7 @@ import CheckoutScreen from '../screens/Sewa/CheckoutScreen';
 import PembayaranScreen from '../screens/Pembayaran/PembayaranScreen';
 import RiwayatScreen from '../screens/Riwayat/RiwayatScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
+import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import MidtransPaymentScreen from '../screens/Pembayaran/MidtransPaymentScreen';
 import { useAuth } from '../context/AuthContext';
 
@@ -26,6 +27,7 @@ type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -116,6 +118,11 @@ const AppNavigator = () => {
               name="MidtransPayment"
               component={MidtransPaymentScreen}
               options={{ headerShown: true, title: 'Pembayaran Online' }}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+              options={{ headerShown: true, title: 'Edit Profil' }}
             />
           </>
         )}

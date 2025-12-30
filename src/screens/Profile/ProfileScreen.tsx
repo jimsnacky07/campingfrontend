@@ -1,8 +1,9 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
+import { IMAGE_BASE_URL } from '../../config/api';
 
 const ProfileScreen: React.FC<any> = ({ navigation }) => {
   const { user, logout } = useAuth();
@@ -35,9 +36,13 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.avatarGlow}>
           <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>
-              {user?.nama?.charAt(0).toUpperCase() || 'U'}
-            </Text>
+            {user?.foto ? (
+              <Image source={{ uri: `${IMAGE_BASE_URL}${user.foto}` }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>
+                {user?.nama?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            )}
           </View>
         </View>
         <Text style={styles.name}>{user?.nama ?? '-'}</Text>
@@ -84,6 +89,16 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
+            <Text style={styles.icon}>🆔</Text>
+          </View>
+          <View style={styles.infoContent}>
+            <Text style={styles.label}>NIK (Nomor Induk Kependudukan)</Text>
+            <Text style={styles.value}>{user?.pelanggan?.nik || '-'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.infoRow}>
+          <View style={styles.iconBox}>
             <Text style={styles.icon}>📍</Text>
           </View>
           <View style={styles.infoContent}>
@@ -93,12 +108,17 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Logout Button */}
+      {/* Action Buttons */}
       <View style={styles.buttonContainer}>
+        <PrimaryButton
+          title="Edit Profil"
+          onPress={() => navigation.navigate('EditProfile')}
+          style={{ width: '100%', marginBottom: 12, backgroundColor: COLORS.secondary }}
+        />
         <PrimaryButton
           title="Keluar Akun"
           onPress={logout}
-          style={{ backgroundColor: COLORS.error, shadowColor: COLORS.error }}
+          style={{ width: '100%', backgroundColor: COLORS.error, shadowColor: COLORS.error }}
         />
         <Text style={styles.versionText}>Versi 1.0.0 (Explorer Edition)</Text>
       </View>
@@ -132,6 +152,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   avatarText: {
     fontSize: 40,
