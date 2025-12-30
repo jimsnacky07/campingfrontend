@@ -4,17 +4,23 @@ import {
   FlatList,
   Linking,
   RefreshControl,
-  SafeAreaView,
+  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
 import { API_BASE_URL, ENDPOINTS } from '../../config/api';
 import { Sewa } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import PrimaryButton from '../../components/PrimaryButton';
 
-const RiwayatScreen: React.FC = () => {
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
+
+const RiwayatScreen: React.FC<any> = ({ navigation }) => {
+  const { user } = useAuth();
   const [data, setData] = useState<Sewa[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -23,6 +29,7 @@ const RiwayatScreen: React.FC = () => {
   const statusOptions = ['pending', 'dibayar', 'dipinjam', 'dikembalikan', 'batal'];
 
   const fetchData = async () => {
+    if (!user) return;
     try {
       setLoading(true);
       const res = await apiClient.get<{ data: Sewa[] }>(`${ENDPOINTS.SEWA}/me`);
@@ -37,7 +44,26 @@ const RiwayatScreen: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
+
+  if (!user) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background, padding: 20 }}>
+        <Text style={{ fontSize: 60, marginBottom: 20 }}>📜</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: 8 }}>
+          Riwayat Transaksi
+        </Text>
+        <Text style={{ color: COLORS.textSecondary, textAlign: 'center', marginBottom: 30, lineHeight: 20 }}>
+          Silakan masuk untuk melihat riwayat penyewaan dan status pembayaran Anda.
+        </Text>
+        <PrimaryButton
+          title="Login Sekarang"
+          onPress={() => navigation.navigate('Login')}
+          style={{ width: '100%' }}
+        />
+      </View>
+    );
+  }
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -56,31 +82,36 @@ const RiwayatScreen: React.FC = () => {
     }
   };
 
+  const syncStatus = async (orderId: string) => {
+    try {
+      setLoading(true);
+      await apiClient.get(`/payment/status/${orderId}`);
+      await fetchData();
+    } catch (error: any) {
+      console.warn('Sync status failed', error);
+      Alert.alert('Gagal', 'Gagal memperbarui status. Pastikan Anda sudah menyelesaikan pembayaran.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
-      pending: '#FCD34D',
-      dibayar: '#60A5FA',
-      dipinjam: '#34D399',
-      dikembalikan: '#9CA3AF',
-      batal: '#F87171',
+      pending: COLORS.warning,
+      dibayar: COLORS.success,
+      dipinjam: COLORS.primary,
+      dikembalikan: COLORS.textSecondary,
+      batal: COLORS.error,
     };
-    return colors[status] || '#9CA3AF';
+    return colors[status] || COLORS.textSecondary;
   };
 
   const filteredData = selectedStatus
     ? data.filter(item => item.status === selectedStatus)
     : data;
 
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Filter Status */}
       <View style={styles.filterContainer}>
         <FlatList
@@ -103,24 +134,17 @@ const RiwayatScreen: React.FC = () => {
                   styles.filterBadgeText,
                   selectedStatus === item && styles.filterBadgeTextActive,
                 ]}>
-                {item}
+                {item.charAt(0).toUpperCase() + item.slice(1)}
               </Text>
             </TouchableOpacity>
           )}
         />
-        {selectedStatus && (
-          <TouchableOpacity
-            style={styles.clearFilter}
-            onPress={() => setSelectedStatus(null)}>
-            <Text style={styles.clearFilterText}>Clear Filter</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <FlatList
         data={filteredData}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{ padding: 20 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -135,40 +159,58 @@ const RiwayatScreen: React.FC = () => {
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Transaksi #{item.id}</Text>
+            <View style={styles.cardHeader}>
+              <View>
+                <Text style={styles.orderId}>TRX-{item.id}</Text>
+                <Text style={styles.dateText}>{item.tanggal_sewa} - {item.tanggal_kembali}</Text>
+              </View>
               <View
                 style={[
-                  styles.badge,
-                  { backgroundColor: getStatusColor(item.status) },
+                  styles.statusBadge,
+                  { backgroundColor: getStatusColor(item.status) + '20' },
                 ]}>
-                <Text style={styles.badgeText}>
+                <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                   {item.status.toUpperCase()}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.sub}>
-              {item.tanggal_sewa} - {item.tanggal_kembali}
-            </Text>
-            <Text style={styles.price}>
-              Rp {item.total_harga.toLocaleString('id-ID')}
-            </Text>
+            <View style={styles.divider} />
+
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Total Pembayaran</Text>
+              <Text style={styles.priceValue}>
+                Rp {item.total_harga.toLocaleString('id-ID')}
+              </Text>
+            </View>
 
             {item.catatan && (
-              <Text style={styles.note}>Catatan: {item.catatan}</Text>
+              <View style={styles.noteBox}>
+                <Text style={styles.noteText}>📝 {item.catatan}</Text>
+              </View>
             )}
 
-            {/* Download Invoice Button */}
-            {(item.status === 'dibayar' ||
-              item.status === 'dipinjam' ||
-              item.status === 'dikembalikan') && (
-              <TouchableOpacity
-                style={styles.downloadBtn}
-                onPress={() => downloadInvoice(item.id)}>
-                <Text style={styles.downloadBtnText}>📄 Download Invoice</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.actionRow}>
+              {/* Download Invoice Button */}
+              {(item.status === 'dibayar' ||
+                item.status === 'dipinjam' ||
+                item.status === 'dikembalikan') && (
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => downloadInvoice(item.id)}>
+                    <Text style={styles.actionBtnText}>📄 Invoice</Text>
+                  </TouchableOpacity>
+                )}
+
+              {/* Check Status Button for Midtrans Pending orders */}
+              {item.status === 'pending' && item.midtrans_order_id && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
+                  onPress={() => syncStatus(item.midtrans_order_id!)}>
+                  <Text style={[styles.actionBtnText, { color: '#fff' }]}>🔄 Cek Status</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         )}
       />
@@ -179,111 +221,117 @@ const RiwayatScreen: React.FC = () => {
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   filterContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    backgroundColor: 'transparent',
+    paddingVertical: 16,
   },
   filterBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    marginRight: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: RADIUS.lg,
     backgroundColor: '#fff',
+    marginRight: 10,
+    ...SHADOWS.soft,
   },
   filterBadgeActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: COLORS.primary,
   },
   filterBadgeText: {
-    color: '#111827',
-    fontSize: 13,
-    fontWeight: '600',
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   filterBadgeTextActive: {
     color: '#fff',
   },
-  clearFilter: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  clearFilterText: {
-    color: '#2563EB',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   emptyContainer: {
-    padding: 40,
+    padding: 60,
     alignItems: 'center',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     fontSize: 16,
+    lineHeight: 24,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: 20,
+    marginBottom: 16,
+    ...SHADOWS.soft,
   },
-  header: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  title: {
+  orderId: {
     fontWeight: 'bold',
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 18,
+    color: COLORS.textPrimary,
   },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  dateText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
   },
-  badgeText: {
-    color: '#fff',
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.md,
+  },
+  statusText: {
     fontSize: 10,
     fontWeight: 'bold',
   },
-  sub: {
-    color: '#6B7280',
-    marginVertical: 4,
-    fontSize: 14,
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 12,
   },
-  price: {
-    color: '#2563EB',
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  priceValue: {
+    color: COLORS.primary,
     fontWeight: 'bold',
     fontSize: 18,
-    marginTop: 4,
   },
-  note: {
-    color: '#6B7280',
+  noteBox: {
+    backgroundColor: COLORS.background,
+    padding: 12,
+    borderRadius: RADIUS.md,
+    marginBottom: 16,
+  },
+  noteText: {
+    color: COLORS.textSecondary,
     fontSize: 13,
-    marginTop: 8,
     fontStyle: 'italic',
   },
-  downloadBtn: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E5E7EB',
   },
-  downloadBtnText: {
-    color: '#2563EB',
-    fontWeight: '600',
+  actionBtnText: {
+    color: COLORS.textPrimary,
+    fontWeight: 'bold',
     fontSize: 14,
   },
 });

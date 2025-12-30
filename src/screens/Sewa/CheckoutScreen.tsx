@@ -1,3 +1,4 @@
+// Force Refresh: Fixed Async Handler
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,6 +12,8 @@ import { useCart } from '../../context/CartContext';
 interface Props {
   navigation: any;
 }
+
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
 
 const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const { SEWA } = ENDPOINTS;
@@ -42,9 +45,7 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
       maxHeight: 1024,
     });
 
-    if (result.didCancel) {
-      return;
-    }
+    if (result.didCancel) return;
 
     if (result.errorCode) {
       Alert.alert('Error', result.errorMessage || 'Gagal memilih foto');
@@ -56,243 +57,262 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  if (!items.length) {
-    Alert.alert('Keranjang kosong', 'Tambahkan barang terlebih dahulu.');
-    return;
-  }
-
-  if (totalPrice <= 0) {
-    Alert.alert('Harga Tidak Valid', 'Total harga tidak boleh Rp 0. Pastikan harga barang sudah diatur.');
-    return;
-  }
-
-  if (!fotoKtp) {
-    Alert.alert('Foto KTP Diperlukan', 'Silakan upload foto KTP terlebih dahulu.');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    const formData = new FormData();
-    formData.append('tanggal_sewa', toDateString(tanggalSewa));
-    formData.append('tanggal_kembali', toDateString(tanggalKembali));
-    if (catatan) {
-      formData.append('catatan', catatan);
+  const handleSewaSubmit = async () => {
+    if (!items.length) {
+      Alert.alert('Keranjang kosong', 'Tambahkan barang terlebih dahulu.');
+      return;
     }
 
-    // Append foto KTP
-    formData.append('foto_ktp', {
-      uri: fotoKtp.uri,
-      type: fotoKtp.type || 'image/jpeg',
-      name: fotoKtp.fileName || 'ktp.jpg',
-    } as any);
+    if (totalPrice <= 0) {
+      Alert.alert('Harga Tidak Valid', 'Total harga tidak boleh Rp 0.');
+      return;
+    }
 
-    // Append items
-    items.forEach((item, index) => {
-      formData.append(`items[${index}][id_barang]`, item.barang.id.toString());
-      formData.append(`items[${index}][qty]`, item.qty.toString());
-    });
+    if (!fotoKtp) {
+      Alert.alert('Foto KTP Diperlukan', 'Silakan upload foto KTP terlebih dahulu.');
+      return;
+    }
 
-    const res = await apiClient.post(SEWA, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    const lastSewa = res.data.data ?? res.data;
-
-    await clear();
-    setFotoKtp(null);
-    Alert.alert('Berhasil', 'Pemesanan berhasil dibuat.', [
-      {
-        text: 'Pilih Metode Pembayaran',
-        onPress: () => {
-          Alert.alert(
-            'Metode Pembayaran',
-            'Pilih cara pembayaran Anda',
-            [
-              { text: 'Manual (Upload Bukti)', onPress: () => navigation.navigate('Pembayaran') },
-              { text: 'Online (Midtrans)', onPress: () => handleMidtransPayAfterSubmit(lastSewa.id) }
-            ]
-          );
-        },
-      },
-    ]);
-  } catch (error: any) {
-    Alert.alert('Gagal', error?.response?.data?.message ?? 'Gagal membuat sewa');
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleMidtransPayAfterSubmit = async (sewaId: number) => {
-  try {
     setLoading(true);
-    const res = await apiClient.post('/payment/create-transaction', {
-      sewa_id: sewaId,
-    });
+    try {
+      const formData = new FormData();
+      formData.append('tanggal_sewa', toDateString(tanggalSewa));
+      formData.append('tanggal_kembali', toDateString(tanggalKembali));
+      if (catatan) formData.append('catatan', catatan);
 
-    const { snap_token, redirect_url } = res.data;
+      formData.append('foto_ktp', {
+        uri: fotoKtp.uri,
+        type: fotoKtp.type || 'image/jpeg',
+        name: fotoKtp.fileName || 'ktp.jpg',
+      } as any);
 
-    navigation.navigate('MidtransPayment', {
-      redirect_url,
-      order_id: `RENT-${sewaId}`,
-    });
-  } catch (err: any) {
-    Alert.alert(
-      'Gagal',
-      err?.response?.data?.message ?? 'Gagal membuat transaksi Midtrans',
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      items.forEach((item, i) => {
+        formData.append(`items[${i}][id_barang]`, item.barang.id.toString());
+        formData.append(`items[${i}][qty]`, item.qty.toString());
+      });
 
-return (
-  <ScrollView contentContainerStyle={styles.container}>
-    <View style={styles.card}>
-      <Text style={styles.sectionTitle}>Periode Sewa</Text>
-      <TouchableOpacity onPress={() => setShowMulai(true)}>
-        <TextField label="Tanggal Sewa" value={toDateString(tanggalSewa)} editable={false} />
-      </TouchableOpacity>
-      {showMulai && (
-        <DateTimePicker
-          value={tanggalSewa}
-          mode="date"
-          onChange={handleDateChange(setTanggalSewa, setShowMulai)}
-        />
-      )}
-      <TouchableOpacity onPress={() => setShowSelesai(true)}>
+      const res = await apiClient.post(SEWA, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const lastSewa = res.data.data ?? res.data;
+      await clear();
+      setFotoKtp(null);
+
+      Alert.alert('Pemesanan Berhasil', 'Pilih metode pembayaran untuk melanjutkan.', [
+        {
+          text: 'Pilih Metode',
+          onPress: () => {
+            Alert.alert(
+              'Metode Pembayaran',
+              'Ingin bayar manual atau otomatis?',
+              [
+                { text: 'Manual (Transfer)', onPress: () => navigation.navigate('Pembayaran') },
+                { text: 'Online (Midtrans)', onPress: () => handleMidtransPayAfterSubmit(lastSewa.id) }
+              ]
+            );
+          },
+        },
+      ]);
+    } catch (error: any) {
+      Alert.alert('Gagal', error?.response?.data?.message ?? 'Gagal membuat sewa');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMidtransPayAfterSubmit = async (sewaId: number) => {
+    try {
+      setLoading(true);
+      const res = await apiClient.post('/payment/create-transaction', { sewa_id: sewaId });
+      const { redirect_url } = res.data;
+      navigation.navigate('MidtransPayment', { redirect_url, order_id: `RENT-${sewaId}` });
+    } catch (err: any) {
+      Alert.alert('Gagal', err?.response?.data?.message ?? 'Gagal membuat transaksi Midtrans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ScrollView style={{ backgroundColor: COLORS.background }} contentContainerStyle={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Periode Penyewaan</Text>
+        <TouchableOpacity onPress={() => setShowMulai(true)}>
+          <TextField label="Mulai Sewa" value={toDateString(tanggalSewa)} editable={false} />
+        </TouchableOpacity>
+        {showMulai && (
+          <DateTimePicker
+            value={tanggalSewa}
+            mode="date"
+            onChange={handleDateChange(setTanggalSewa, setShowMulai)}
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowSelesai(true)}>
+          <TextField
+            label="Tanggal Kembali"
+            value={toDateString(tanggalKembali)}
+            editable={false}
+          />
+        </TouchableOpacity>
+        {showSelesai && (
+          <DateTimePicker
+            value={tanggalKembali}
+            mode="date"
+            minimumDate={tanggalSewa}
+            onChange={handleDateChange(setTanggalKembali, setShowSelesai)}
+          />
+        )}
         <TextField
-          label="Tanggal Kembali"
-          value={toDateString(tanggalKembali)}
-          editable={false}
+          label="Catatan Tambahan"
+          value={catatan}
+          onChangeText={setCatatan}
+          multiline
+          placeholder="Tulis catatan jika ada..."
         />
-      </TouchableOpacity>
-      {showSelesai && (
-        <DateTimePicker
-          value={tanggalKembali}
-          mode="date"
-          minimumDate={tanggalSewa}
-          onChange={handleDateChange(setTanggalKembali, setShowSelesai)}
-        />
-      )}
-      <TextField
-        label="Catatan"
-        value={catatan}
-        onChangeText={setCatatan}
-        multiline
-        placeholder="Contoh: butuh ekstra tali"
-      />
-    </View>
-
-    <View style={styles.card}>
-      <Text style={styles.sectionTitle}>Upload Foto KTP</Text>
-      <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-        <Text style={styles.uploadButtonText}>
-          {fotoKtp ? '✓ Foto KTP Terpilih' : '📷 Pilih Foto KTP'}
-        </Text>
-      </TouchableOpacity>
-      {fotoKtp && (
-        <View style={styles.imagePreview}>
-          <Image source={{ uri: fotoKtp.uri }} style={styles.previewImage} />
-          <TouchableOpacity style={styles.changeButton} onPress={pickImage}>
-            <Text style={styles.changeButtonText}>Ganti Foto</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      <Text style={styles.helperText}>* Foto KTP diperlukan untuk verifikasi</Text>
-    </View>
-
-    <View style={styles.summary}>
-      <Text style={styles.sectionTitle}>Ringkasan</Text>
-      {items.map(item => (
-        <View style={styles.summaryRow} key={item.barang.id}>
-          <Text>{item.barang.nama_barang}</Text>
-          <Text>
-            {item.qty} x Rp {item.barang.harga_sewa.toLocaleString('id-ID')}
-          </Text>
-        </View>
-      ))}
-      <View style={styles.summaryRow}>
-        <Text style={{ fontWeight: 'bold' }}>Estimasi total per hari</Text>
-        <Text style={{ fontWeight: 'bold' }}>
-          Rp {totalPrice.toLocaleString('id-ID')}
-        </Text>
       </View>
-    </View>
 
-    <PrimaryButton title="Buat Sewa" onPress={onSubmit} loading={loading} />
-  </ScrollView>
-);
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Identitas (KTP)</Text>
+        {!fotoKtp ? (
+          <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage}>
+            <Text style={{ fontSize: 40, marginBottom: 8 }}>📷</Text>
+            <Text style={styles.uploadText}>Klik untuk upload foto KTP</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.imagePreview}>
+            <Image source={{ uri: fotoKtp.uri }} style={styles.previewImage} />
+            <TouchableOpacity style={styles.changeBtn} onPress={pickImage}>
+              <Text style={styles.changeBtnText}>Ganti Foto KTP</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <Text style={styles.helperText}>* Data aman dan hanya untuk verifikasi sewa</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Ringkasan Barang</Text>
+        {items.map(item => (
+          <View style={styles.summaryRow} key={item.barang.id}>
+            <Text style={styles.summaryItemName}>{item.barang.nama_barang}</Text>
+            <Text style={styles.summaryItemPrice}>
+              {item.qty}x Rp{item.barang.harga_sewa.toLocaleString('id-ID')}
+            </Text>
+          </View>
+        ))}
+        <View style={styles.divider} />
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total per hari</Text>
+          <Text style={styles.totalValue}>Rp {totalPrice.toLocaleString('id-ID')}</Text>
+        </View>
+      </View>
+
+      <PrimaryButton
+        title="Konfirmasi & Bayar"
+        onPress={handleSewaSubmit}
+        loading={loading}
+        style={{ marginTop: 8 }}
+      />
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    gap: 16,
-    backgroundColor: '#F3F4F6',
+    padding: 24,
+    gap: 20,
+    paddingBottom: 60,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: 20,
+    ...SHADOWS.soft,
   },
   sectionTitle: {
     fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#111827',
+    fontSize: 18,
+    marginBottom: 20,
+    color: COLORS.textPrimary,
   },
-  summary: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  uploadButton: {
-    backgroundColor: '#2563EB',
-    padding: 16,
-    borderRadius: 8,
+  uploadPlaceholder: {
+    height: 160,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: COLORS.primary + '40',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  uploadButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
+  uploadText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   imagePreview: {
-    marginTop: 12,
     alignItems: 'center',
   },
   previewImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
+    height: 180,
+    borderRadius: RADIUS.lg,
     resizeMode: 'cover',
   },
-  changeButton: {
+  changeBtn: {
     marginTop: 12,
-    padding: 10,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.md,
   },
-  changeButtonText: {
-    color: '#2563EB',
-    fontWeight: '600',
+  changeBtnText: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   helperText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 8,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 12,
     fontStyle: 'italic',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  summaryItemName: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  summaryItemPrice: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 12,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
   },
 });
 
 export default CheckoutScreen;
-

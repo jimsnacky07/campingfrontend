@@ -43,6 +43,7 @@ export interface Sewa {
   status: 'pending' | 'dibayar' | 'dipinjam' | 'dikembalikan' | 'batal';
   bukti_bayar?: string | null;
   catatan?: string | null;
+  midtrans_order_id?: string | null;
   detail_sewa?: DetailSewa[];
 }
 

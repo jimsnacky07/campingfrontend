@@ -17,7 +17,7 @@ const MidtransPaymentScreen = () => {
         // Check for success/finish keywords in Midtrans URL callback
         if (navState.url.includes('finish') || navState.url.includes('success')) {
             debug.info('Midtrans Payment Success detected in WebView', { order_id });
-            navigation.navigate('RiwayatSewa', { refresh: true });
+            navigation.navigate('Tabs', { screen: 'Riwayat' });
         }
 
         if (navState.url.includes('error') || navState.url.includes('failed')) {

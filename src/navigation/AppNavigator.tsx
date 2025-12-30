@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -23,38 +23,56 @@ type RootStackParamList = {
   Checkout: undefined;
   Pembayaran: undefined;
   MidtransPayment: { redirect_url: string, order_id: string };
+  Login: undefined;
+  Register: undefined;
+  ForgotPassword: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const AuthNavigator = () => (
-  <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-    <AuthStack.Screen name="Login" component={LoginScreen} />
-    <AuthStack.Screen name="Register" component={RegisterScreen} />
-    <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-  </AuthStack.Navigator>
-);
+import { COLORS, RADIUS, SHADOWS } from '../constants/Theme';
 
-const TabNavigator = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Riwayat" component={RiwayatScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
-  </Tab.Navigator>
-);
+const TabNavigator = () => {
+  const { user } = useAuth();
 
-const AppStack = () => (
-  <Stack.Navigator>
-    <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
-    <Stack.Screen name="BarangDetail" component={BarangDetailScreen} options={{ title: 'Detail Barang' }} />
-    <Stack.Screen name="Keranjang" component={KeranjangScreen} />
-    <Stack.Screen name="Checkout" component={CheckoutScreen} />
-    <Stack.Screen name="Pembayaran" component={PembayaranScreen} />
-    <Stack.Screen name="MidtransPayment" component={MidtransPaymentScreen} options={{ title: 'Pembayaran Online' }} />
-  </Stack.Navigator>
-);
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          height: 64,
+          borderRadius: RADIUS.full,
+          backgroundColor: COLORS.surface,
+          paddingBottom: 0,
+          ...SHADOWS.medium,
+          borderTopWidth: 0,
+        },
+        tabBarLabelStyle: {
+          fontWeight: 'bold',
+          fontSize: 10,
+          marginBottom: 8,
+        },
+        tabBarIcon: ({ color, size }) => {
+          let icon = '';
+          if (route.name === 'Home') icon = '🏠';
+          else if (route.name === 'Riwayat') icon = '📜';
+          else if (route.name === 'Profile') icon = '👤';
+          return <Text style={{ fontSize: 24, color }}>{icon}</Text>;
+        },
+      })}>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Riwayat" component={RiwayatScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+};
 
 const AppNavigator = () => {
   const { user, loading } = useAuth();
@@ -62,14 +80,46 @@ const AppNavigator = () => {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator />
+        <ActivityIndicator color={COLORS.primary} size="large" />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      {user ? <AppStack /> : <AuthNavigator />}
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}>
+        {/* Main App Flow - Always accessible */}
+        <Stack.Screen name="Tabs" component={TabNavigator} />
+        <Stack.Screen
+          name="BarangDetail"
+          component={BarangDetailScreen}
+          options={{ headerShown: true, title: 'Detail Barang' }}
+        />
+        <Stack.Screen name="Keranjang" component={KeranjangScreen} options={{ headerShown: true }} />
+
+        {/* Auth Screens - Only accessible if not logged in */}
+        {!user ? (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
+        ) : (
+          <>
+            {/* Authenticated Only Screens */}
+            <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ headerShown: true }} />
+            <Stack.Screen name="Pembayaran" component={PembayaranScreen} options={{ headerShown: true }} />
+            <Stack.Screen
+              name="MidtransPayment"
+              component={MidtransPaymentScreen}
+              options={{ headerShown: true, title: 'Pembayaran Online' }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

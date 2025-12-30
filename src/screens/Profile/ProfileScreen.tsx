@@ -1,38 +1,71 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
 
-const ProfileScreen: React.FC = () => {
+const ProfileScreen: React.FC<any> = ({ navigation }) => {
   const { user, logout } = useAuth();
+
+  if (!user) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background, padding: 20 }}>
+        <Text style={{ fontSize: 60, marginBottom: 20 }}>👤</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: 8 }}>
+          Belum Masuk Akun
+        </Text>
+        <Text style={{ color: COLORS.textSecondary, textAlign: 'center', marginBottom: 30, lineHeight: 20 }}>
+          Silakan masuk ke akun Anda untuk melihat profil, informasi penyewaan, dan mengelola akun.
+        </Text>
+        <PrimaryButton
+          title="Login Sekarang"
+          onPress={() => navigation.navigate('Login')}
+          style={{ width: '100%' }}
+        />
+        <TouchableOpacity style={{ marginTop: 16 }} onPress={() => navigation.navigate('Register')}>
+          <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>Daftar Akun Baru</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      {/* Avatar */}
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>
-            {user?.nama?.charAt(0).toUpperCase() || 'U'}
-          </Text>
+      {/* Avatar Header */}
+      <View style={styles.header}>
+        <View style={styles.avatarGlow}>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarText}>
+              {user?.nama?.charAt(0).toUpperCase() || 'U'}
+            </Text>
+          </View>
         </View>
         <Text style={styles.name}>{user?.nama ?? '-'}</Text>
-        <Text style={styles.role}>{user?.role === 'admin' ? 'Administrator' : 'Pelanggan'}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>
+            {user?.role === 'admin' ? 'Administrator' : 'Premium Member'}
+          </Text>
+        </View>
       </View>
 
-      {/* User Info */}
+      {/* User Info Card */}
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Informasi Akun</Text>
+        <Text style={styles.sectionTitle}>Detail Akun</Text>
 
         <View style={styles.infoRow}>
-          <Text style={styles.icon}>📧</Text>
+          <View style={styles.iconBox}>
+            <Text style={styles.icon}>📧</Text>
+          </View>
           <View style={styles.infoContent}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Email Terdaftar</Text>
             <Text style={styles.value}>{user?.email || '-'}</Text>
           </View>
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.icon}>👤</Text>
+          <View style={styles.iconBox}>
+            <Text style={styles.icon}>👤</Text>
+          </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>Username</Text>
             <Text style={styles.value}>{user?.username || '-'}</Text>
@@ -40,17 +73,21 @@ const ProfileScreen: React.FC = () => {
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.icon}>📱</Text>
+          <View style={styles.iconBox}>
+            <Text style={styles.icon}>📱</Text>
+          </View>
           <View style={styles.infoContent}>
-            <Text style={styles.label}>Telepon</Text>
+            <Text style={styles.label}>Nomor Telepon</Text>
             <Text style={styles.value}>{user?.telp || '-'}</Text>
           </View>
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.icon}>📍</Text>
+          <View style={styles.iconBox}>
+            <Text style={styles.icon}>📍</Text>
+          </View>
           <View style={styles.infoContent}>
-            <Text style={styles.label}>Alamat</Text>
+            <Text style={styles.label}>Alamat Pengiriman</Text>
             <Text style={styles.value}>{user?.alamat || '-'}</Text>
           </View>
         </View>
@@ -58,7 +95,12 @@ const ProfileScreen: React.FC = () => {
 
       {/* Logout Button */}
       <View style={styles.buttonContainer}>
-        <PrimaryButton title="Logout" onPress={logout} />
+        <PrimaryButton
+          title="Keluar Akun"
+          onPress={logout}
+          style={{ backgroundColor: COLORS.error, shadowColor: COLORS.error }}
+        />
+        <Text style={styles.versionText}>Versi 1.0.0 (Explorer Edition)</Text>
       </View>
     </ScrollView>
   );
@@ -67,84 +109,106 @@ const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.background,
   },
-  avatarContainer: {
+  header: {
     alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingTop: 60,
+    paddingBottom: 40,
+    backgroundColor: COLORS.primary,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  avatarGlow: {
+    padding: 4,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 16,
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   avatarText: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#fff',
+    color: COLORS.primary,
   },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#fff',
+    marginBottom: 8,
   },
-  role: {
-    fontSize: 14,
-    color: '#6B7280',
+  roleBadge: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+    textTransform: 'uppercase',
   },
   card: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 12,
-    padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    backgroundColor: COLORS.surface,
+    marginHorizontal: 20,
+    marginTop: -30,
+    borderRadius: RADIUS.xl,
+    padding: 24,
+    ...SHADOWS.medium,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
+    color: COLORS.textPrimary,
+    marginBottom: 24,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   icon: {
-    fontSize: 24,
-    marginRight: 16,
+    fontSize: 20,
   },
   infoContent: {
     flex: 1,
   },
   label: {
     fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
     fontWeight: '600',
   },
   value: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
   },
   buttonContainer: {
-    padding: 20,
-    paddingTop: 0,
+    padding: 24,
+    alignItems: 'center',
+  },
+  versionText: {
+    marginTop: 16,
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
 });
 

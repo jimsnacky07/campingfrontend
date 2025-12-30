@@ -7,14 +7,24 @@ interface EmptyStateProps {
   message?: string;
 }
 
+import { COLORS, RADIUS, SPACING } from '../constants/Theme';
+
+interface EmptyStateProps {
+  icon?: string;
+  title: string;
+  message?: string;
+}
+
 const EmptyState: React.FC<EmptyStateProps> = ({
-  icon = '📦',
+  icon = '🏕️',
   title,
   message,
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.iconCircle}>
+        <Text style={styles.icon}>{icon}</Text>
+      </View>
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
     </View>
@@ -27,23 +37,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
+    backgroundColor: 'transparent',
+  },
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
   },
   icon: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 50,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    color: COLORS.textPrimary,
+    marginBottom: 10,
     textAlign: 'center',
   },
   message: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 15,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
 });
 

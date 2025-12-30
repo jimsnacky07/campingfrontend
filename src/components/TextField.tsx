@@ -1,19 +1,22 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 
+import { COLORS, RADIUS } from '../constants/Theme';
+
 interface Props extends TextInputProps {
-  label: string;
+  label?: string;
   error?: string;
+  containerStyle?: any;
 }
 
-const TextField: React.FC<Props> = ({ label, error, ...rest }) => {
+const TextField: React.FC<Props> = ({ label, error, containerStyle, ...rest }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.container, containerStyle]}>
+      {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
         {...rest}
         style={[styles.input, error && styles.inputError, rest.multiline && styles.multiline]}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={COLORS.textSecondary}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
@@ -22,31 +25,35 @@ const TextField: React.FC<Props> = ({ label, error, ...rest }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   label: {
-    marginBottom: 6,
-    color: '#111827',
+    marginBottom: 8,
+    color: COLORS.textPrimary,
     fontWeight: '600',
+    fontSize: 14,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#111827',
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: COLORS.textPrimary,
+    backgroundColor: '#fff',
+    fontSize: 16,
   },
   inputError: {
-    borderColor: '#DC2626',
+    borderColor: COLORS.error,
   },
   multiline: {
-    minHeight: 100,
+    minHeight: 120,
     textAlignVertical: 'top',
   },
   error: {
-    color: '#DC2626',
+    color: COLORS.error,
     marginTop: 4,
+    fontSize: 12,
   },
 });
 

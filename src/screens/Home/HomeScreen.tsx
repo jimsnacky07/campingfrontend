@@ -2,16 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
+import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/client';
-import { ENDPOINTS } from '../../config/api';
+import { ENDPOINTS, IMAGE_BASE_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
 import { Barang, Kategori } from '../../types';
 
@@ -20,6 +23,7 @@ interface Props {
 }
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  const { user } = useAuth();
   const [kategori, setKategori] = useState<Kategori[]>([]);
   const [barang, setBarang] = useState<Barang[]>([]);
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null);
@@ -49,8 +53,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const fetchBarang = async () => {
     try {
       setLoading(true);
-      
-      // Build query params
       const params: any = {};
       if (searchQuery) params.search = searchQuery;
       if (selectedKategori) params.kategori = selectedKategori;
@@ -85,98 +87,127 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate('BarangDetail', { barang: item })}>
-      <View style={{ flex: 1 }}>
+      <Image
+        source={{
+          uri: item.foto?.startsWith('http')
+            ? item.foto
+            : `${IMAGE_BASE_URL}${item.foto || 'barang/default.png'}`,
+        }}
+        style={styles.cardImage}
+      />
+      <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={styles.cardTitle}>{item.nama_barang}</Text>
         <Text style={styles.cardSub}>{item.kategori?.nama_kategori}</Text>
-        <Text style={styles.price}>Rp {item.harga_sewa.toLocaleString('id-ID')}/hari</Text>
-        <Text style={styles.stock}>Stok: {item.stok}</Text>
+        <Text style={styles.price}>Rp {item.harga_sewa.toLocaleString('id-ID')}</Text>
+        <View style={styles.badgeContainer}>
+          <View style={[styles.miniBadge, { backgroundColor: item.stok > 0 ? '#DCFCE7' : '#FEE2E2' }]}>
+            <Text style={[styles.miniBadgeText, { color: item.stok > 0 ? '#166534' : '#991B1B' }]}>
+              {item.stok > 0 ? 'Tersedia' : 'Habis'}
+            </Text>
+          </View>
+          <Text style={styles.stockText}>Stok: {item.stok}</Text>
+        </View>
       </View>
-      <TouchableOpacity 
-        style={[styles.addBtn, item.stok === 0 && styles.addBtnDisabled]} 
-        onPress={() => item.stok > 0 && addToCart(item)}
+      <TouchableOpacity
+        style={[styles.addBtn, item.stok === 0 && styles.addBtnDisabled]}
+        onPress={() => {
+          if (!user) {
+            navigation.navigate('Login');
+            return;
+          }
+          if (item.stok > 0) addToCart(item);
+        }}
         disabled={item.stok === 0}>
-        <Text style={{ color: '#fff', fontWeight: 'bold' }}>+</Text>
+        <Text style={{ fontSize: 18 }}>🛒</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
-  if (loading && !refreshing && barang.length === 0) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
-      </View>
-    );
-  }
-
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Cari Peralatan Camping</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Keranjang')}>
-          <Text style={styles.link}>Keranjang</Text>
+  const renderHeader = () => (
+    <View style={styles.headerContent}>
+      <View style={styles.welcomeRow}>
+        <View>
+          <Text style={styles.greetingText}>Halo, Petualang! 👋</Text>
+          <Text style={styles.userName}>{user?.nama || 'Tamu'}</Text>
+        </View>
+        <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('Keranjang')}>
+          <Text style={{ fontSize: 24 }}>🎒</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Cari barang..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#9CA3AF"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Text style={styles.clearIcon}>✕</Text>
-            </TouchableOpacity>
-          )}
+      {/* Banner Promo */}
+      <View style={styles.promoBanner}>
+        <View style={styles.promoTextContainer}>
+          <Text style={styles.promoTitle}>Promo Liburan</Text>
+          <Text style={styles.promoDesc}>Diskon 20% untuk paket Tenda + Porter!</Text>
+          <TouchableOpacity style={styles.promoBtn}>
+            <Text style={styles.promoBtnText}>Lihat Detail</Text>
+          </TouchableOpacity>
         </View>
-        {(searchQuery || selectedKategori) && (
-          <TouchableOpacity style={styles.clearFilter} onPress={clearSearch}>
-            <Text style={styles.clearFilterText}>Clear Filter</Text>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchBar}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari peralatan..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor={COLORS.textSecondary}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Text style={styles.clearIcon}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
 
+      {/* Categories */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Kategori</Text>
+      </View>
       <FlatList
-        ListHeaderComponent={
-          <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
-            <FlatList
-              data={kategori}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={item => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.badge,
-                    selectedKategori === item.id && styles.badgeActive,
-                  ]}
-                  onPress={() =>
-                    setSelectedKategori(prev => (prev === item.id ? null : item.id))
-                  }>
-                  <Text
-                    style={[
-                      styles.badgeText,
-                      selectedKategori === item.id && styles.badgeTextActive,
-                    ]}>
-                    {item.nama_kategori}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        }
+        data={kategori}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.badge,
+              selectedKategori === item.id && styles.badgeActive,
+            ]}
+            onPress={() => setSelectedKategori(prev => (prev === item.id ? null : item.id))}>
+            <Text
+              style={[
+                styles.badgeText,
+                selectedKategori === item.id && styles.badgeTextActive,
+              ]}>
+              {item.nama_kategori}
+            </Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.categoryList}
+      />
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Semua Peralatan</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <FlatList
+        ListHeaderComponent={renderHeader}
         data={barang}
         keyExtractor={item => item.id.toString()}
         renderItem={renderBarang}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-        contentContainerStyle={{ padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
@@ -193,37 +224,79 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  headerContent: {
+    padding: 20,
+    backgroundColor: 'transparent',
+  },
+  welcomeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    marginBottom: 24,
   },
-  title: {
-    fontSize: 20,
+  greetingText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  userName: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
-  link: {
-    color: '#2563EB',
-    fontWeight: '600',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+  cartBtn: {
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.soft,
+  },
+  promoBanner: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.xl,
+    padding: 20,
+    marginBottom: 24,
+    height: 160,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  promoTextContainer: {
+    width: '70%',
+  },
+  promoTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  promoDesc: {
+    color: '#E5E7EB',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  promoBtn: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    alignSelf: 'flex-start',
+  },
+  promoBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
+    backgroundColor: '#fff',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 16,
+    height: 52,
+    ...SHADOWS.soft,
+    marginBottom: 24,
   },
   searchIcon: {
     fontSize: 18,
@@ -232,79 +305,109 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#111827',
+    color: COLORS.textPrimary,
   },
   clearIcon: {
     fontSize: 18,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     padding: 4,
   },
-  clearFilter: {
-    marginTop: 8,
-    alignSelf: 'flex-end',
+  sectionHeader: {
+    marginBottom: 12,
   },
-  clearFilterText: {
-    color: '#2563EB',
-    fontSize: 14,
-    fontWeight: '600',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+  },
+  categoryList: {
+    paddingBottom: 16,
+    marginBottom: 8,
   },
   badge: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    marginRight: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: RADIUS.lg,
+    backgroundColor: '#fff',
+    marginRight: 10,
+    ...SHADOWS.soft,
+    minWidth: 90,
+    alignItems: 'center',
   },
   badgeActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: COLORS.primary,
   },
-  badgeText: { color: '#111827' },
-  badgeTextActive: { color: '#fff' },
+  badgeText: {
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+  },
+  badgeTextActive: {
+    color: '#fff',
+  },
   card: {
     flexDirection: 'row',
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    marginBottom: 12,
+    marginHorizontal: 20,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.surface,
+    marginBottom: 16,
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    ...SHADOWS.soft,
+  },
+  cardImage: {
+    width: 90,
+    height: 90,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.background,
+    resizeMode: 'cover',
   },
   cardTitle: {
     fontWeight: 'bold',
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 18,
+    color: COLORS.textPrimary,
   },
   cardSub: {
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     marginVertical: 2,
-    fontSize: 13,
+    fontSize: 14,
   },
   price: {
-    color: '#2563EB',
+    color: COLORS.primary,
     fontWeight: 'bold',
-    marginTop: 4,
-  },
-  stock: {
-    color: '#6B7280',
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 2,
   },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 8,
+  },
+  miniBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  miniBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  stockText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
   addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#2563EB',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   addBtnDisabled: {
-    backgroundColor: '#D1D5DB',
+    opacity: 0.5,
   },
   emptyContainer: {
     padding: 40,
@@ -312,7 +415,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    color: '#6B7280',
+    color: COLORS.textSecondary,
     fontSize: 16,
   },
 });
