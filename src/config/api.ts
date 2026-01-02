@@ -1,3 +1,4 @@
+// export const BASE_URL = 'https://campingbackend-production-f85a.up.railway.app';
 export const BASE_URL = 'http://192.168.100.48:8000';
 export const API_BASE_URL = `${BASE_URL}/api`;
 export const IMAGE_BASE_URL = `${BASE_URL}/storage/`;

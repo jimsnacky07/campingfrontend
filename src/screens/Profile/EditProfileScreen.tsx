@@ -11,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../components/PrimaryButton';
 import TextField from '../../components/TextField';
 import { useAuth } from '../../context/AuthContext';
@@ -115,7 +116,7 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
                                 </View>
                             )}
                             <View style={styles.editBadge}>
-                                <Text style={{ fontSize: 12 }}>📷</Text>
+                                <Ionicons name="camera" size={16} color={COLORS.primary} />
                             </View>
                         </TouchableOpacity>
                         <Text style={styles.photoLabel}>Ketuk untuk ganti foto</Text>

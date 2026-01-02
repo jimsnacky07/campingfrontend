@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';
@@ -59,7 +60,7 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>📧</Text>
+            <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>Email Terdaftar</Text>
@@ -69,7 +70,7 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>👤</Text>
+            <Ionicons name="person-outline" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>Username</Text>
@@ -79,7 +80,7 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>📱</Text>
+            <Ionicons name="phone-portrait-outline" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>Nomor Telepon</Text>
@@ -89,7 +90,7 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>🆔</Text>
+            <Ionicons name="card-outline" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>NIK (Nomor Induk Kependudukan)</Text>
@@ -99,7 +100,7 @@ const ProfileScreen: React.FC<any> = ({ navigation }) => {
 
         <View style={styles.infoRow}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>📍</Text>
+            <Ionicons name="location-outline" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.label}>Alamat Pengiriman</Text>

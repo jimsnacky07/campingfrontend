@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
 import { API_BASE_URL, ENDPOINTS } from '../../config/api';
@@ -186,7 +187,10 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
 
             {item.catatan && (
               <View style={styles.noteBox}>
-                <Text style={styles.noteText}>📝 {item.catatan}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="create-outline" size={14} color={COLORS.textSecondary} style={{ marginRight: 4 }} />
+                  <Text style={styles.noteText}>{item.catatan}</Text>
+                </View>
               </View>
             )}
 
@@ -198,7 +202,10 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
                   <TouchableOpacity
                     style={styles.actionBtn}
                     onPress={() => downloadInvoice(item.id)}>
-                    <Text style={styles.actionBtnText}>📄 Invoice</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="document-text-outline" size={16} color={COLORS.textPrimary} style={{ marginRight: 6 }} />
+                      <Text style={styles.actionBtnText}>Invoice</Text>
+                    </View>
                   </TouchableOpacity>
                 )}
 
@@ -207,7 +214,10 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
                 <TouchableOpacity
                   style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
                   onPress={() => syncStatus(item.midtrans_order_id!)}>
-                  <Text style={[styles.actionBtnText, { color: '#fff' }]}>🔄 Cek Status</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="sync-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                    <Text style={[styles.actionBtnText, { color: '#fff' }]}>Cek Status</Text>
+                  </View>
                 </TouchableOpacity>
               )}
             </View>

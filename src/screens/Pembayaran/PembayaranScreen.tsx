@@ -76,7 +76,7 @@ const PembayaranScreen: React.FC = () => {
 
       const asset = result.assets[0];
       const formData = new FormData();
-      formData.append('bukti_bayar', {
+      formData.append('bukti_jemput', {
         uri: asset.uri,
         name: asset.fileName ?? 'bukti.jpg',
         type: asset.type ?? 'image/jpeg',
@@ -179,13 +179,25 @@ const PembayaranScreen: React.FC = () => {
               Rp {item.total_harga.toLocaleString('id-ID')}
             </Text>
 
-            {item.bukti_bayar && (
+            {item.bukti_jemput && (
               <View style={styles.previewContainer}>
-                <Text style={styles.previewLabel}>Bukti Transfer:</Text>
+                <Text style={styles.previewLabel}>Bukti Penjemputan Barang:</Text>
                 <Image
                   source={{
-                    uri: `${API_BASE_URL.replace('/api', '')}/storage/${item.bukti_bayar
-                      }`,
+                    uri: `${API_BASE_URL.replace('/api', '')}/storage/${item.bukti_jemput}`,
+                  }}
+                  style={styles.preview}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+
+            {item.bukti_bayar && (
+              <View style={styles.previewContainer}>
+                <Text style={styles.previewLabel}>Bukti Pembayaran (Sukses):</Text>
+                <Image
+                  source={{
+                    uri: `${API_BASE_URL.replace('/api', '')}/storage/${item.bukti_bayar}`,
                   }}
                   style={styles.preview}
                   resizeMode="cover"
@@ -194,35 +206,68 @@ const PembayaranScreen: React.FC = () => {
             )}
 
             <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                style={[
-                  styles.uploadBtn,
-                  uploadingId === item.id && styles.btnDisabled,
-                ]}
-                onPress={() => handleUpload(item.id)}
-                disabled={uploadingId === item.id || payingId === item.id}>
-                {uploadingId === item.id ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnText}>
-                    {item.bukti_bayar ? 'Ganti Bukti' : 'Upload Bukti'}
-                  </Text>
-                )}
-              </TouchableOpacity>
+              {/* Manual / Pickup Proof Upload - Only if NOT Midtrans OR (Midtrans but failed/cancelled/pending/etc which shouldn't happen here if filtered properly, but let's stick to manual logic) */}
+              {!item.midtrans_order_id && (
+                <TouchableOpacity
+                  style={[
+                    styles.uploadBtn,
+                    uploadingId === item.id && styles.btnDisabled,
+                  ]}
+                  onPress={() => handleUpload(item.id)}
+                  disabled={uploadingId === item.id || payingId === item.id}>
+                  {uploadingId === item.id ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.btnText}>
+                      {item.bukti_jemput ? 'Ganti Bukti Penjemputan' : 'Upload Bukti Penjemputan'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={[
-                  styles.midtransBtn,
-                  payingId === item.id && styles.btnDisabled,
-                ]}
-                onPress={() => handleMidtransPayment(item.id)}
-                disabled={payingId === item.id || uploadingId === item.id}>
-                {payingId === item.id ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnText}>Bayar Online</Text>
-                )}
-              </TouchableOpacity>
+              {/* Midtrans Payment Pending */}
+              {item.status === 'pending' && (!item.midtrans_order_id || item.midtrans_order_id) && (
+                /* Logic adjustment: user can choose midtrans anytime if pending? 
+                   Original code allowed picking manual/midtrans at checkout.
+                   Here we need to honor that choice or allow paying if pending.
+                   Let's assume if no manual proof uploaded, allow midtrans.
+                */
+                !item.bukti_jemput && (
+                  <TouchableOpacity
+                    style={[
+                      styles.midtransBtn,
+                      payingId === item.id && styles.btnDisabled,
+                    ]}
+                    onPress={() => handleMidtransPayment(item.id)}
+                    disabled={payingId === item.id || uploadingId === item.id}>
+                    {payingId === item.id ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.btnText}>{item.midtrans_order_id ? 'Lanjutkan Pembayaran' : 'Bayar Online'}</Text>
+                    )}
+                  </TouchableOpacity>
+                )
+              )}
+
+              {/* Midtrans Success Proof Upload */}
+              {item.midtrans_order_id && item.status === 'dibayar' && (
+                <TouchableOpacity
+                  style={[
+                    styles.uploadBtn,
+                    uploadingId === item.id && styles.btnDisabled,
+                    { backgroundColor: '#34D399' }
+                  ]}
+                  onPress={() => handleUpload(item.id)}
+                  disabled={uploadingId === item.id}>
+                  {uploadingId === item.id ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.btnText}>
+                      {item.bukti_bayar ? 'Ganti Bukti Pembayaran' : 'Upload Bukti Pembayaran'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}

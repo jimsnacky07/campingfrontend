@@ -1,6 +1,7 @@
 import React from 'react';
 import { RouteProp } from '@react-navigation/native';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../components/PrimaryButton';
 import { IMAGE_BASE_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
@@ -18,16 +19,18 @@ const BarangDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { barang } = route.params;
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const [imageError, setImageError] = React.useState(false);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <Image
           source={{
-            uri: barang.foto?.startsWith('http')
+            uri: !imageError && barang.foto?.startsWith('http')
               ? barang.foto
               : `${IMAGE_BASE_URL}${barang.foto || 'barang/default.png'}`,
           }}
+          onError={() => setImageError(true)}
           style={styles.image}
         />
         <View style={styles.container}>
@@ -52,17 +55,17 @@ const BarangDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
           <View style={styles.specRow}>
             <View style={styles.specItem}>
-              <Text style={styles.specEmoji}>📦</Text>
+              <Ionicons name="cube-outline" size={24} color={COLORS.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.specLabel}>Sisa Stok</Text>
               <Text style={styles.specValue}>{barang.stok} unit</Text>
             </View>
             <View style={styles.specItem}>
-              <Text style={styles.specEmoji}>⛰️</Text>
+              <Ionicons name="leaf-outline" size={24} color={COLORS.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.specLabel}>Kondisi</Text>
               <Text style={styles.specValue}>Sangat Baik</Text>
             </View>
             <View style={styles.specItem}>
-              <Text style={styles.specEmoji}>🛡️</Text>
+              <Ionicons name="shield-checkmark-outline" size={24} color={COLORS.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.specLabel}>Garansi</Text>
               <Text style={styles.specValue}>Kebersihan</Text>
             </View>

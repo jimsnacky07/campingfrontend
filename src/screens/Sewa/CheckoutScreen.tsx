@@ -3,6 +3,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../components/PrimaryButton';
 import TextField from '../../components/TextField';
 import apiClient from '../../api/client';
@@ -176,7 +177,7 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Identitas (KTP)</Text>
         {!fotoKtp ? (
           <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage}>
-            <Text style={{ fontSize: 40, marginBottom: 8 }}>📷</Text>
+            <Ionicons name="camera" size={40} color={COLORS.primary} style={{ marginBottom: 8 }} />
             <Text style={styles.uploadText}>Klik untuk upload foto KTP</Text>
           </TouchableOpacity>
         ) : (
@@ -201,10 +202,32 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         ))}
         <View style={styles.divider} />
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total per hari</Text>
-          <Text style={styles.totalValue}>Rp {totalPrice.toLocaleString('id-ID')}</Text>
-        </View>
+
+        {(() => {
+          const start = new Date(tanggalSewa);
+          const end = new Date(tanggalKembali);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+          const grandTotal = totalPrice * diffDays;
+
+          return (
+            <>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total per hari</Text>
+                <Text style={styles.summaryValue}>Rp {totalPrice.toLocaleString('id-ID')}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Lama Sewa</Text>
+                <Text style={styles.summaryValue}>{diffDays} Hari</Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total Bayar</Text>
+                <Text style={styles.totalValue}>Rp {grandTotal.toLocaleString('id-ID')}</Text>
+              </View>
+            </>
+          );
+        })()}
       </View>
 
       <PrimaryButton

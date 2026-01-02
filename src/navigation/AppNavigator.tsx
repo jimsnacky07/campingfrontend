@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
@@ -61,12 +62,18 @@ const TabNavigator = () => {
           fontSize: 10,
           marginBottom: 8,
         },
-        tabBarIcon: ({ color, size }) => {
-          let icon = '';
-          if (route.name === 'Home') icon = '🏠';
-          else if (route.name === 'Riwayat') icon = '📜';
-          else if (route.name === 'Profile') icon = '👤';
-          return <Text style={{ fontSize: 24, color }}>{icon}</Text>;
+        tabBarIcon: ({ color, size, focused }) => {
+          let iconName = '';
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Riwayat') {
+            iconName = focused ? 'time' : 'time-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={24} color={color} />;
         },
       })}>
       <Tab.Screen name="Home" component={HomeScreen} />

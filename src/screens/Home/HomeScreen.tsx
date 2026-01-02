@@ -1,3 +1,4 @@
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,7 +31,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, items } = useCart();
+  const cartItemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
   // Debounced search
   useEffect(() => {
@@ -118,7 +120,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           if (item.stok > 0) addToCart(item);
         }}
         disabled={item.stok === 0}>
-        <Text style={{ fontSize: 18 }}>🛒</Text>
+        <Ionicons name="cart-outline" size={24} color={COLORS.primary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -131,7 +133,26 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.userName}>{user?.nama || 'Tamu'}</Text>
         </View>
         <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('Keranjang')}>
-          <Text style={{ fontSize: 24 }}>🎒</Text>
+          <Ionicons name="bag-handle-outline" size={24} color={COLORS.primary} />
+          {cartItemCount > 0 && (
+            <View style={{
+              position: 'absolute',
+              top: -8,
+              right: -8,
+              backgroundColor: '#EF4444',
+              borderRadius: 10,
+              minWidth: 20,
+              height: 20,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderWidth: 2,
+              borderColor: '#fff'
+            }}>
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
+                {cartItemCount > 9 ? '9+' : cartItemCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -148,7 +169,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Search Bar */}
       <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Ionicons name="search-outline" size={20} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
           placeholder="Cari peralatan..."
@@ -158,7 +179,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Text style={styles.clearIcon}>✕</Text>
+            <Ionicons name="close-circle" size={18} color={COLORS.textSecondary} />
           </TouchableOpacity>
         )}
       </View>

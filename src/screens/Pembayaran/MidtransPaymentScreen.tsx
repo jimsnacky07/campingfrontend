@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { debug } from '../../utils/debug';
@@ -17,7 +17,18 @@ const MidtransPaymentScreen = () => {
         // Check for success/finish keywords in Midtrans URL callback
         if (navState.url.includes('finish') || navState.url.includes('success')) {
             debug.info('Midtrans Payment Success detected in WebView', { order_id });
-            navigation.navigate('Tabs', { screen: 'Riwayat' });
+            // Show alert to let user see the midtrans success page / screenshot it
+            // Alert.alert(
+            //     'Pembayaran Berhasil',
+            //     'Transaksi Anda telah berhasil diproses. Silakan kembali ke menu Riwayat untuk mengunggah bukti jika diperlukan.',
+            //     [
+            //         {
+            //             text: 'OK - Kembali ke Riwayat',
+            //             onPress: () => navigation.navigate('Tabs', { screen: 'Riwayat' })
+            //         }
+            //     ],
+            //     { cancelable: false }
+            // );
         }
 
         if (navState.url.includes('error') || navState.url.includes('failed')) {
