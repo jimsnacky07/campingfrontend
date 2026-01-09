@@ -339,6 +339,15 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontWeight: '600',
   },
+  summaryLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+  },
   divider: {
     height: 1,
     backgroundColor: '#F3F4F6',

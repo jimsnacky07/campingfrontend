@@ -93,7 +93,9 @@ const DetailSewaScreen: React.FC<Props> = ({ navigation, route }) => {
                 Alert.alert('Sukses', 'Bukti transfer berhasil diunggah', [
                     { text: 'OK', onPress: () => navigation.goBack() }
                 ]);
-                setBuktiImage(file.uri);
+                if (file.uri) {
+                    setBuktiImage(file.uri);
+                }
             } catch (error: any) {
                 console.error('Upload failed', error);
                 const errorMessage = error?.response?.data?.message || error?.message || 'Gagal mengunggah bukti';

@@ -10,7 +10,7 @@ import { Barang } from '../../types';
 
 interface Props {
   navigation: any;
-  route: RouteProp<{ params: { barang: Barang } }, 'params'>;
+  route: any;
 }
 
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/Theme';

@@ -1,5 +1,13 @@
 export type UserRole = 'admin' | 'user';
 
+export interface Pelanggan {
+  id: number;
+  id_user: number;
+  nik: string;
+  alamat: string;
+  telp: string;
+}
+
 export interface User {
   id: number;
   nama: string;
@@ -9,6 +17,7 @@ export interface User {
   alamat?: string | null;
   telp?: string | null;
   foto?: string | null;
+  pelanggan?: Pelanggan | null;
 }
 
 export interface Kategori {
@@ -42,6 +51,7 @@ export interface Sewa {
   total_harga: number;
   status: 'pending' | 'dibayar' | 'dipinjam' | 'dikembalikan' | 'batal';
   bukti_bayar?: string | null;
+  bukti_jemput?: string | null;
   catatan?: string | null;
   midtrans_order_id?: string | null;
   detail_sewa?: DetailSewa[];
