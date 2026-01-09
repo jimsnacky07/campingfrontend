@@ -41,9 +41,9 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const pickImage = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      quality: 0.8,
-      maxWidth: 1024,
-      maxHeight: 1024,
+      quality: 0.5,
+      maxWidth: 800,
+      maxHeight: 800,
     });
 
     if (result.didCancel) return;
@@ -92,8 +92,27 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
         formData.append(`items[${i}][qty]`, item.qty.toString());
       });
 
+      console.log('Submitting Sewa with FormData:', {
+        tanggal_sewa: toDateString(tanggalSewa),
+        tanggal_kembali: toDateString(tanggalKembali),
+        catatan,
+        foto_ktp: {
+          uri: fotoKtp.uri,
+          type: fotoKtp.type,
+          name: fotoKtp.fileName
+        }
+      });
+
       const res = await apiClient.post(SEWA, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: (data, headers) => {
+          // Penting: Axios terkadang salah menyetel boundary jika header disetel manual.
+          // Kita biarkan Axios yang menentukannya.
+          return data;
+        },
       });
 
       const lastSewa = res.data.data ?? res.data;
@@ -116,6 +135,10 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
         },
       ]);
     } catch (error: any) {
+      console.error('Sewa Submit Error:', error);
+      if (error.response) {
+        console.error('Error info:', error.response.data);
+      }
       Alert.alert('Gagal', error?.response?.data?.message ?? 'Gagal membuat sewa');
     } finally {
       setLoading(false);

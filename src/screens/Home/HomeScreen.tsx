@@ -32,7 +32,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { addToCart, items } = useCart();
-  const cartItemCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const cartItemCount = items.length;
 
   // Debounced search
   useEffect(() => {

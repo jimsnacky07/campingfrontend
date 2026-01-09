@@ -13,6 +13,7 @@ import KeranjangScreen from '../screens/Sewa/KeranjangScreen';
 import CheckoutScreen from '../screens/Sewa/CheckoutScreen';
 import PembayaranScreen from '../screens/Pembayaran/PembayaranScreen';
 import RiwayatScreen from '../screens/Riwayat/RiwayatScreen';
+import DetailSewaScreen from '../screens/Riwayat/DetailSewaScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import MidtransPaymentScreen from '../screens/Pembayaran/MidtransPaymentScreen';
@@ -25,6 +26,7 @@ type RootStackParamList = {
   Checkout: undefined;
   Pembayaran: undefined;
   MidtransPayment: { redirect_url: string, order_id: string };
+  DetailSewa: { sewa: any };
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
@@ -125,6 +127,11 @@ const AppNavigator = () => {
               name="MidtransPayment"
               component={MidtransPaymentScreen}
               options={{ headerShown: true, title: 'Pembayaran Online' }}
+            />
+            <Stack.Screen
+              name="DetailSewa"
+              component={DetailSewaScreen}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="EditProfile"

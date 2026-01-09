@@ -71,18 +71,6 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
     fetchData();
   };
 
-  const downloadInvoice = async (id: number) => {
-    try {
-      const url = `${API_BASE_URL}/sewa/${id}/invoice`;
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      }
-    } catch (error) {
-      console.warn('Failed to download invoice', error);
-    }
-  };
-
   const syncStatus = async (orderId: string) => {
     try {
       setLoading(true);
@@ -159,7 +147,10 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate('DetailSewa', { sewa: item })}
+            activeOpacity={0.7}>
             <View style={styles.cardHeader}>
               <View>
                 <Text style={styles.orderId}>TRX-{item.id}</Text>
@@ -194,34 +185,23 @@ const RiwayatScreen: React.FC<any> = ({ navigation }) => {
               </View>
             )}
 
-            <View style={styles.actionRow}>
-              {/* Download Invoice Button */}
-              {(item.status === 'dibayar' ||
-                item.status === 'dipinjam' ||
-                item.status === 'dikembalikan') && (
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => downloadInvoice(item.id)}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="document-text-outline" size={16} color={COLORS.textPrimary} style={{ marginRight: 6 }} />
-                      <Text style={styles.actionBtnText}>Invoice</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-
-              {/* Check Status Button for Midtrans Pending orders */}
-              {item.status === 'pending' && item.midtrans_order_id && (
+            {/* Check Status Button for Midtrans Pending orders */}
+            {item.status === 'pending' && item.midtrans_order_id && (
+              <View style={styles.actionRow}>
                 <TouchableOpacity
                   style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
-                  onPress={() => syncStatus(item.midtrans_order_id!)}>
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    syncStatus(item.midtrans_order_id!);
+                  }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Ionicons name="sync-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
                     <Text style={[styles.actionBtnText, { color: '#fff' }]}>Cek Status</Text>
                   </View>
                 </TouchableOpacity>
-              )}
-            </View>
-          </View>
+              </View>
+            )}
+          </TouchableOpacity>
         )}
       />
     </SafeAreaView>
